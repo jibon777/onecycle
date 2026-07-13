@@ -2,9 +2,8 @@ pipeline {
     agent any
 
     environment {
-        SCANNER_HOME = tool 'SonarQubeScanner' // Nama scanner di Jenkins Global Tool Configuration
         DOCKER_REGISTRY = 'registry.hub.docker.com'
-        IMAGE_NAME = 'username-docker-kamu/node-login-app'
+        IMAGE_NAME = 'jibon/node-login-app' // Silakan sesuaikan nama image
         IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
@@ -12,16 +11,17 @@ pipeline {
         stage('Cloning Code') {
             steps {
                 echo 'Mengambil kode terbaru dari repository...'
-                // Biasanya otomatis di Jenkins jika menggunakan multibranch/webhook
             }
         }
 
         stage('SonarQube Code Analysis') {
             steps {
                 script {
-                    // Jalankan analisis SonarQube
-                    withSonarQubeEnv('SonarQubeServer') { // Nama server di Jenkins System Configuration
-                        sh "${SCANNER_HOME}/bin/sonar-scanner"
+                    // Berjalan secara ephemeral memanfaatkan image resmi Sonar Scanner via Docker
+                    withSonarQubeEnv('SonarQubeServer') {
+                        docker.image('sonarsource/sonar-scanner-cli:latest').inside {
+                            sh 'sonar-scanner'
+                        }
                     }
                 }
             }
@@ -30,7 +30,6 @@ pipeline {
         stage('Quality Gate') {
             steps {
                 script {
-                    // Menunggu hasil evaluasi dari SonarQube (Lolos/Gagal)
                     timeout(time: 5, unit: 'MINUTES') {
                         waitForQualityGate abortPipeline: true
                     }
@@ -49,7 +48,6 @@ pipeline {
         stage('Push Image to Registry') {
             steps {
                 script {
-                    // Pastikan credential 'docker-hub-credentials' sudah dibuat di Jenkins
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                         sh "echo \$PASSWORD | docker login -u \$USERNAME --password-stdin ${DOCKER_REGISTRY}"
                         sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
@@ -62,8 +60,6 @@ pipeline {
         stage('Deploy to Production') {
             steps {
                 echo 'Melakukan deployment ke server Production...'
-                // Simulasi deploy menggunakan docker-compose di server production
-                // Di dunia nyata, Anda bisa menggunakan SSH Agent untuk remote server, atau Kubernetes (kubectl)
                 sh "docker compose down"
                 sh "docker compose up -d"
                 echo 'Aplikasi berhasil diperbarui di Production!'
@@ -75,12 +71,6 @@ pipeline {
         always {
             echo 'Membersihkan sisa build lama...'
             sh "docker image prune -f"
-        }
-        success {
-            echo 'Pipeline selesai dengan sukses! Aplikasi siap digunakan.'
-        }
-        failure {
-            echo 'Pipeline gagal. Silakan periksa log di atas atau laporan SonarQube.'
         }
     }
 }

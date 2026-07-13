@@ -10,7 +10,6 @@ app.use(session({
     saveUninitialized: true
 }));
 
-// Konfigurasi Koneksi PostgreSQL
 const pool = new Pool({
     user: process.env.DB_USER || 'postgres',
     host: process.env.DB_HOST || 'localhost',
@@ -19,7 +18,7 @@ const pool = new Pool({
     port: 5432,
 });
 
-// Halaman Login (UI)
+// UI Halaman Login
 app.get('/', (req, res) => {
     if (req.session.loggedIn) return res.redirect('/dashboard');
     res.send(`
@@ -32,7 +31,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// Proses Login
+// Logika Validasi Login
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     try {
@@ -49,7 +48,7 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// Halaman Dashboard
+// Dashboard Utama
 app.get('/dashboard', (req, res) => {
     if (!req.session.loggedIn) return res.redirect('/');
     res.send(`
@@ -59,7 +58,7 @@ app.get('/dashboard', (req, res) => {
     `);
 });
 
-// Proses Logout
+// Logika Logout
 app.get('/logout', (req, res) => {
     req.session.destroy();
     res.redirect('/');

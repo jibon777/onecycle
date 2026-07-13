@@ -1,4 +1,3 @@
-# Build stage untuk efisiensi
 FROM node:20-alpine
 WORKDIR /app
 COPY app/package*.json ./
