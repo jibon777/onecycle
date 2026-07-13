@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    container_name: jenkins-ci
+    ports:
+      - "8080:8080"   # Akses Web UI Jenkins
+      - "50000:50000" # Untuk komunikasi agent/node jika ada
+    volumes:
+      - jenkins_data:/var/jenkins_home
+      # PENTING: Mount docker socket host agar Jenkins bisa menjalankan perintah 'docker build'
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Mengizinkan Jenkins memakai binary docker dari host (jika sudah terinstall di host)
+      - /usr/bin/docker:/usr/bin/docker
+    user: root # Menggunakan root agar Jenkins punya izin penuh mengakses docker.sock
+    networks:
+      - ci-network
+    restart: always
+
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: sonarqube-ci
+    ports:
+      - "9000:9000"   # Akses Web UI SonarQube
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    networks:
+      - ci-network
+    restart: always
+
+networks:
+  ci-network:
+    name: ci-network
+
+volumes:
+  jenkins_data:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
