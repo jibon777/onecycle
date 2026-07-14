@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_REGISTRY = 'registry.hub.docker.com'
-        IMAGE_NAME = 'username-docker-kamu/node-login-app' // Ganti dengan username Docker Hub Anda
+        IMAGE_NAME = 'jibon/node-login-app' // Ganti dengan username Docker Hub Anda
         IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
