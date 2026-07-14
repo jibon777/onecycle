@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_REGISTRY = 'registry.hub.docker.com'
-        IMAGE_NAME = 'jibon/node-login-app' // Silakan sesuaikan nama image
+        IMAGE_NAME = 'username-docker-kamu/node-login-app' // Ganti dengan username Docker Hub Anda
         IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
@@ -19,7 +19,8 @@ pipeline {
                 script {
                     // Berjalan secara ephemeral memanfaatkan image resmi Sonar Scanner via Docker
                     withSonarQubeEnv('SonarQubeServer') {
-                        docker.image('sonarsource/sonar-scanner-cli:latest').inside {
+                        // Menggunakan jaringan 'ci-network' agar container scanner bisa mendeteksi server sonarqube-ci
+                        docker.image('sonarsource/sonar-scanner-cli:latest').inside('--network=ci-network') {
                             sh 'sonar-scanner'
                         }
                     }
@@ -30,6 +31,7 @@ pipeline {
         stage('Quality Gate') {
             steps {
                 script {
+                    // Menunggu konfirmasi kelulusan kode dari SonarQube selama maks 5 menit
                     timeout(time: 5, unit: 'MINUTES') {
                         waitForQualityGate abortPipeline: true
                     }
@@ -48,6 +50,7 @@ pipeline {
         stage('Push Image to Registry') {
             steps {
                 script {
+                    // Menggunakan kredensial Docker Hub yang tersimpan di Jenkins
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                         sh "echo \$PASSWORD | docker login -u \$USERNAME --password-stdin ${DOCKER_REGISTRY}"
                         sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
@@ -60,6 +63,7 @@ pipeline {
         stage('Deploy to Production') {
             steps {
                 echo 'Melakukan deployment ke server Production...'
+                // Merestart container aplikasi login menggunakan image terbaru
                 sh "docker compose down"
                 sh "docker compose up -d"
                 echo 'Aplikasi berhasil diperbarui di Production!'
@@ -70,6 +74,7 @@ pipeline {
     post {
         always {
             echo 'Membersihkan sisa build lama...'
+            // Menghapus image menggantung agar penyimpanan lokal tidak penuh
             sh "docker image prune -f"
         }
     }
