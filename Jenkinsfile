@@ -62,12 +62,12 @@ pipeline {
             }
         }
 
-        stage('Deploy to Production') {
+stage('Deploy to Production') {
             steps {
                 echo 'Melakukan deployment ke server Production...'
-                // Menjalankan docker-compose di host lokal Anda
-                sh "docker compose down"
-                sh "docker compose up -d"
+                // Memastikan container lama bersih, lalu menarik image terbaru & membangun container DB kustom
+                sh "IMAGE_NAME=${DOCKER_REGISTRY}/${IMAGE_NAME} docker compose down"
+                sh "IMAGE_NAME=${DOCKER_REGISTRY}/${IMAGE_NAME} docker compose up -d --build"
                 echo 'Aplikasi berhasil diperbarui di Production!'
             }
         }

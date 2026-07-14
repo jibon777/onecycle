@@ -1,8 +1,8 @@
 version: '3.8'
-
 services:
   web:
-    build: .
+    # Menggunakan image yang sudah kita push ke Docker Hub, bukan build lokal lagi
+    image: ${IMAGE_NAME:-docker.io/jibon/node-login-app}:latest
     ports:
       - "3000:3000"
     environment:
@@ -16,15 +16,16 @@ services:
         condition: service_healthy
 
   db:
-    image: postgres:15-alpine
+    # Membangun image postgres kustom yang sudah berisi init.sql
+    build:
+      context: .
+      dockerfile: Dockerfile.db
     environment:
       - POSTGRES_USER=myuser
       - POSTGRES_PASSWORD=mypassword
       - POSTGRES_DB=mydb
     ports:
       - "5432:5432"
-    volumes:
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U myuser -d mydb"]
       interval: 5s
