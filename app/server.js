@@ -64,5 +64,22 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
+// SIMULASI BUG UNTUK TESTING SONARQUBE
+function fiturKalkulatorRusak() {
+    // Bug 1: Infinite loop yang bikin server hang (CPU 100%)
+    for (let i = 0; i < 10; i--) { 
+        console.log("Looping abadi karena i malah berkurang");
+    }
+
+    // Bug 2: Membandingkan variabel yang sama (logika eror)
+    let nama = "admin";
+    if (nama === nama) { 
+        return true;
+    }
+    
+    // Bug 3: Kode mati yang tidak akan pernah dieksekusi
+    console.log("Kode hantu, tidak mungkin sampai sini"); 
+}
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server berjalan di port ${PORT}`));
